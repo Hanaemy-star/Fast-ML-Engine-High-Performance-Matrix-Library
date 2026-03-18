@@ -149,13 +149,16 @@ std::shared_ptr<Tensor> Tensor::matmul(std::shared_ptr<Tensor> other) const {
     auto d = {M, N};
     auto result = std::make_shared<Tensor>(d, 0.0);
 
-    for (size_t i = 0; i < M; ++i) {
-        for (size_t j = 0; j < N; ++j) {
-            double sum = 0.0;
-            for (size_t k = 0; k < K; ++k) {
-                sum += (*this)({i, k}) * (*other)({k, j});
+    const double* a_ptr = this->data.data();
+    const double* b_ptr = other->data.data();
+    double* res_ptr = result->data.data();
+
+    for (size_t i = 0; i < M; i++) {
+        for (size_t k = 0; k < K; k++) {
+            double a_val = a_ptr[i * K + k];
+            for (size_t j = 0; j < N; j++) {
+                res_ptr[i * N + j] += a_val * b_ptr[k * N + j];
             }
-            (*result)({i, j}) = sum;
         }
     }
     return result;
