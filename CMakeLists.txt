@@ -3,6 +3,11 @@ project(fast_ml_engine)
 
 set(CMAKE_CXX_STANDARD 20)
 
+if(MSVC)
+    add_compile_options(/arch:AVX2)
+else()
+    add_compile_options(-mavx2 -mfma -march=native)
+endif()
 
 add_library(math_lib
         include/tensor.hpp

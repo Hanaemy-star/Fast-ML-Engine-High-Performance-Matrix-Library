@@ -1,6 +1,7 @@
 #include "tensor.hpp"
 #include <numeric>
 #include <algorithm>
+#include <immintrin.h>
 
 Tensor::Tensor(std::vector<size_t> shape, double initial_value, bool requires_grad) : shape(shape) , requires_grad(requires_grad) {
     if (requires_grad) {
@@ -156,7 +157,18 @@ std::shared_ptr<Tensor> Tensor::matmul(std::shared_ptr<Tensor> other) const {
     for (size_t i = 0; i < M; i++) {
         for (size_t k = 0; k < K; k++) {
             double a_val = a_ptr[i * K + k];
-            for (size_t j = 0; j < N; j++) {
+            __m256d va = _mm256_set1_pd(a_val);
+
+            size_t j = 0;
+            for (; j + 3 < N; j += 4) {
+                __m256d vb = _mm256_loadu_pd(b_ptr + (k * N + j));
+                __m256d vr = _mm256_loadu_pd(res_ptr + (i * N + j));
+
+                vr = _mm256_fmadd_pd(va, vb, vr);
+
+                _mm256_storeu_pd(res_ptr + (i * N + j), vr);
+            }
+            for (; j < N; j++) {
                 res_ptr[i * N + j] += a_val * b_ptr[k * N + j];
             }
         }
