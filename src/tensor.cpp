@@ -154,22 +154,36 @@ std::shared_ptr<Tensor> Tensor::matmul(std::shared_ptr<Tensor> other) const {
     const double* b_ptr = other->data.data();
     double* res_ptr = result->data.data();
 
-    for (size_t i = 0; i < M; i++) {
-        for (size_t k = 0; k < K; k++) {
-            double a_val = a_ptr[i * K + k];
-            __m256d va = _mm256_set1_pd(a_val);
+    const int BS = 32;
 
-            size_t j = 0;
-            for (; j + 3 < N; j += 4) {
-                __m256d vb = _mm256_loadu_pd(b_ptr + (k * N + j));
-                __m256d vr = _mm256_loadu_pd(res_ptr + (i * N + j));
+    for (size_t ii = 0; ii < M; ii += BS) {
+        size_t i_end = std::min(ii + BS, M);
 
-                vr = _mm256_fmadd_pd(va, vb, vr);
+        for (size_t kk = 0; kk < K; kk += BS) {
+            size_t k_end = std::min(kk + BS, K);
 
-                _mm256_storeu_pd(res_ptr + (i * N + j), vr);
-            }
-            for (; j < N; j++) {
-                res_ptr[i * N + j] += a_val * b_ptr[k * N + j];
+            for (size_t jj = 0; jj < N; jj += BS) {
+                size_t j_end = std::min(jj + BS, N);
+
+                for (size_t i = ii; i < i_end; i++) {
+                    for (size_t k = kk; k < k_end; k++) {
+                        double a_val = a_ptr[i * K + k];
+                        __m256d va = _mm256_set1_pd(a_val);
+
+                        size_t j = jj;
+                        for (; j + 3 < j_end; j += 4) {
+                            __m256d vb = _mm256_loadu_pd(b_ptr + (k * N + j));
+                            __m256d vr = _mm256_loadu_pd(res_ptr + (i * N + j));
+
+                            vr = _mm256_fmadd_pd(va, vb, vr);
+
+                            _mm256_storeu_pd(res_ptr + (i * N + j), vr);
+                        }
+                        for (; j < j_end; j++) {
+                            res_ptr[i * N + j] += a_val * b_ptr[k * N + j];
+                        }
+                    }
+                }
             }
         }
     }

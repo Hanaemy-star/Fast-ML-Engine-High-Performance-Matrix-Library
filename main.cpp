@@ -18,7 +18,7 @@ int main() {
     std::chrono::duration<double> elapsed_seconds = end - start;
 
     std::cout << "Time: " << elapsed_seconds.count() << " seconds" << std::endl;
-    std::cout << "GFLOPS: " << (2.0 * size * size * size) / (elapsed_seconds.count() * 1e9) << std::endl;
+    std::cout << "GFLOPS: " << (2.0 * size * size * size / (elapsed_seconds.count() * 1e9)) << std::endl;
 
     return 0;
 }
