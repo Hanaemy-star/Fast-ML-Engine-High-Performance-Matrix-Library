@@ -156,8 +156,8 @@ std::shared_ptr<Tensor> Tensor::matmul(std::shared_ptr<Tensor> other) const {
 
     const int BS = 32;
     #pragma omp parallel for schedule(static)
-    for (size_t ii = 0; ii < M; ii += BS) {
-        size_t i_end = std::min(ii + BS, M);
+    for (long long ii = 0; ii < M; ii += BS) {
+        size_t i_end = std::min(ii + BS, (long long)M);
 
         for (size_t kk = 0; kk < K; kk += BS) {
             size_t k_end = std::min(kk + BS, K);
