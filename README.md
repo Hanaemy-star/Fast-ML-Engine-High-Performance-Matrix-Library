@@ -1,23 +1,48 @@
-# Fast-ML-Engine-High-Performance-Matrix-Library
-## Performance Evolution
+# Fast-ML-Engine: High-Performance Matrix Operations Library
 
-The core of this engine is a highly optimized Matrix Multiplication (GEMM) implementation. Through several stages of low-level optimization, the execution time for a **1000x1000** double-precision matrix was reduced from **310 seconds** to **0.3 seconds** (~1000x speedup).
+A C++/CUDA library demonstrating deep optimization of linear algebra kernels. Developed as a high-performance backend for machine learning workloads, achieving a **150x+ speedup** over naive implementations.
 
-### Optimization Benchmark (1000x1000 Matrix)
+##  Performance Evolution (FP32 Precision)
 
-| Optimization Stage | Time (sec) | GFLOPS | Speedup |
-| :--- | :--- | :--- | :--- |
-| **Baseline** (Naive O(n³) traversal) | 310.0 s | 0.006 | 1x |
-| **IKJ Order** (Cache-friendly access) | 2.5 s | 0.8 | 124x |
-| **AVX2 + SIMD** (Vectorization) | 1.3 s | 1.5 | 238x |
-| **SIMD + Tiling** (L1 Cache Locality) | 1.2 s | 1.6 | 258x |
-| **OpenMP** (Multithreading) | 0.3 s | 6.6 | **1033x** |
+###  CPU Benchmarks (1,000 x 1,000 Matrix)
 
-### Key Technical Improvements
+| Stage | Optimization Strategy | Time (sec) | GFLOPS | Speedup |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | **Baseline** (Naive C++) | 310.0s | 0.006 | 1x |
+| 2 | **Cache-Friendly** (IKJ Order) | 2.5s | 0.800 | 124x |
+| 3 | **Vectorized** (AVX2 + FMA) | 1.3s | 1.538 | 238x |
+| 4 | **Parallel** (OpenMP + SIMD) | 0.3s | 6.667 | 1,033x |
 
-* **Cache Locality (Loop Tiling):** Implemented a block-based approach ($32 \times 32$ tiles) to ensure data stays in the L1/L2 cache, drastically reducing expensive RAM fetches.
-* **SIMD Vectorization:** Leveraged Intel AVX2 intrinsics (`_mm256_fmadd_pd`) to perform 4 double-precision Fused Multiply-Add operations per CPU cycle.
-* **Parallel Computing:** Scaled computation across all available CPU cores using OpenMP with a thread-safe work-sharing scheduler.
-* **Memory Sympathy:** Achieved a ~1000x increase in throughput by aligning software logic with modern CPU microarchitecture.
+---
 
-> "Achieved a 1000x speedup on CPU through deep cache optimization, manual vectorization, and multi-core scaling."
+###  GPU Benchmarks (10,000 x 10,000 Matrix)
+
+| Stage | Optimization Strategy | Time (sec) | GFLOPS | Speedup (vs Stage 4) |
+| :--- | :--- | :--- | :--- | :--- |
+| 5 | **GPU Naive** (CUDA Kernel) | 3.0s* | 667.0 | ~100x |
+| 6 | **GPU Tiled** (Shared Memory) | **2.0s*** | **1,000.0+** | **150x+** |
+
+*\*Note: GPU timing includes memory transfer (HtoD / DtoH) for 2.4GB of data.*
+
+##  Key Features & Optimizations
+
+### 1. CPU Optimization (AVX2 / OpenMP)
+* **Data Locality:** Reordered loops to IKJ pattern to minimize cache misses.
+* **SIMD Vectorization:** Explicit use of Intel Intrinsics (`__m256`, `_mm256_fmadd_ps`) to process 8 floats per cycle.
+* **Multi-threading:** Work-sharing using OpenMP with optimized grain size.
+
+### 2. GPU Optimization (CUDA)
+* **Memory Tiling:** Implemented **Shared Memory Tiling** to reduce Global Memory transactions. Each block of threads cooperatively loads data into L1-speed shared memory.
+* **Occupancy Tuning:** Optimized `TILE_SIZE` and block dimensions (16x16) for maximum hardware utilization.
+* **Synchronization:** Precise use of `__syncthreads()` to prevent race conditions during tiled loading.
+
+##  Project Structure
+* `Tensor.cpp`: Core logic, SIMD/OpenMP implementations.
+* `cuda_kernels.cu`: CUDA kernels (Naive & Tiled).
+* `autograd`: (From previous version) Reverse-mode automatic differentiation.
+
+##  Requirements
+* NVIDIA GPU (Compute Capability 7.5+)
+* CUDA Toolkit 13.2+
+* C++20 Compiler (GCC/Clang/MSVC)
+* OpenMP support
