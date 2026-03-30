@@ -9,7 +9,7 @@
 
 class Tensor : public std::enable_shared_from_this<Tensor> {
 private:
-    std::vector<double> data;
+    std::vector<float> data;
     std::vector<size_t> shape;
     std::shared_ptr<Tensor> grad;
     std::vector<std::shared_ptr<Tensor>> prev;
@@ -28,19 +28,19 @@ public:
 
     static std::shared_ptr<Tensor> mse_loss(std::shared_ptr<Tensor> pred, std::shared_ptr<Tensor> target);
 
-    Tensor(std::vector<size_t> shape, double initial_value = 0.0, bool requires_grad = false);
+    Tensor(std::vector<size_t> shape, float initial_value = 0.0, bool requires_grad = false);
 
-    double& operator()(const std::vector<size_t>& indices);
+    float& operator()(const std::vector<size_t>& indices);
 
-    double operator()(const std::vector<size_t>& indices) const;
+    float operator()(const std::vector<size_t>& indices) const;
 
     void reshape(std::vector<size_t> nshape);
 
-    void fill(double value);
+    void fill(float value);
 
     std::shared_ptr<Tensor> get_grad() const;
 
-    std::vector<double>& get_data();
+    std::vector<float>& get_data();
 
     Tensor& operator+=(const Tensor& other);
 
@@ -50,13 +50,13 @@ public:
 
     void print() const;
 
-    Tensor& apply_(std::function<double(double)> func);
+    Tensor& apply_(std::function<float(float)> func);
 
-    std::shared_ptr<Tensor> apply(std::function<double(double)> func) const;
+    std::shared_ptr<Tensor> apply(std::function<float(float)> func) const;
 
     std::shared_ptr<Tensor> leaky_relu();
 
-    Tensor operator*(const double& scalar) const;
+    Tensor operator*(const float& scalar) const;
 
 
 
